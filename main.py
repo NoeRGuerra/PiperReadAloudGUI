@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter.filedialog import askopenfilename
+from tkinter.messagebox import askyesno
 from tkinter import ttk
 from piper.voice import PiperVoice
 from pathlib import Path
@@ -15,7 +16,7 @@ class MainWindow:
         self.parent.config(menu=self.menubar)
         self.file_menu = tk.Menu(self.menubar, tearoff=0)
         self.file_menu.add_command(label="New file...")
-        self.file_menu.add_command(label="Open file...")
+        self.file_menu.add_command(label="Open file...", command=self.open_file)
         self.file_menu.add_command(label="Exit", command=self.parent.destroy)
         self.menubar.add_cascade(label="File", menu=self.file_menu)
 
@@ -31,10 +32,20 @@ class MainWindow:
 
     def open_file(self):
         filepath = askopenfilename(parent=self.parent, filetypes=[("Text files", "*.txt")])
-        if filepath:
-            self.parent.title(f"Piper Read Aloud - {Path(filepath).name}")
-        else:
-            pass
+        if not filepath:
+            return
+        
+        self.parent.title(f"Piper Read Aloud - {Path(filepath).name}")
+        with open(filepath) as file:
+            file_content = file.read()
+
+        if self.text_entry.get("1.0", "end-1c"):
+            answer = askyesno("Do you want to proceed?", "Opening a new file will overwrite the curent text. Do you want to proceed?")
+            if not answer:
+                return
+            
+        self.text_entry.delete("1.0", tk.END)
+        self.text_entry.insert("1.0", file_content)
 
 if __name__ == "__main__":
     root = tk.Tk()

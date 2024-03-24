@@ -47,6 +47,12 @@ class MainWindow:
         self.text_entry.delete("1.0", tk.END)
         self.text_entry.insert("1.0", file_content)
 
+    def save_file(self): # Save current text as a .txt file
+        pass
+
+    def new_file(self): # Delete current text 
+        pass
+
 if __name__ == "__main__":
     root = tk.Tk()
     MainWindow(root)

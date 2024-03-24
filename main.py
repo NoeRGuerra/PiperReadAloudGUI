@@ -1,6 +1,5 @@
 import tkinter as tk
-from tkinter.filedialog import askopenfilename
-from tkinter.messagebox import askyesno
+from tkinter import filedialog, messagebox
 from tkinter import ttk
 from piper.voice import PiperVoice
 from pathlib import Path
@@ -17,6 +16,7 @@ class MainWindow:
         self.file_menu = tk.Menu(self.menubar, tearoff=0)
         self.file_menu.add_command(label="New file...")
         self.file_menu.add_command(label="Open file...", command=self.open_file)
+        self.file_menu.add_command(label="Save file...", command=self.save_file)
         self.file_menu.add_command(label="Exit", command=self.parent.destroy)
         self.menubar.add_cascade(label="File", menu=self.file_menu)
 
@@ -31,7 +31,7 @@ class MainWindow:
         self.parent.columnconfigure(1, weight=1)
 
     def open_file(self):
-        filepath = askopenfilename(parent=self.parent, filetypes=[("Text files", "*.txt")])
+        filepath = filedialog.askopenfilename(parent=self.parent, filetypes=[("Text files", "*.txt")])
         if not filepath:
             return
         
@@ -40,17 +40,28 @@ class MainWindow:
             file_content = file.read()
 
         if self.text_entry.get("1.0", "end-1c"):
-            answer = askyesno("Do you want to proceed?", "Opening a new file will overwrite the curent text. Do you want to proceed?")
+            answer = messagebox.askyesno("Do you want to proceed?", "Opening a new file will overwrite the curent text. Do you want to proceed?")
             if not answer:
                 return
             
         self.text_entry.delete("1.0", tk.END)
         self.text_entry.insert("1.0", file_content)
 
-    def save_file(self): # Save current text as a .txt file
-        pass
+    def save_file(self):
+        filepath = filedialog.asksaveasfilename(parent=self.parent, filetypes=[("Text files", "*.txt")])
+        if not filepath:
+            return
+        text_content = self.text_entry.get("1.0", "end-1c")
+        try:
+            with open(filepath, 'w') as file:
+                file.write(text_content)
+            if Path(filepath).exists():
+                messagebox.showinfo("File saved successfully", f"File saved successfully on {filepath}")
+        except Exception as e:
+            messagebox.showerror("Error", f"Error: {e}")
 
-    def new_file(self): # Delete current text 
+
+    def new_file(self):
         pass
 
 if __name__ == "__main__":

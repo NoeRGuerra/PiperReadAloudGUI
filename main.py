@@ -18,7 +18,7 @@ class MainWindow:
         self.file_menu.add_command(label="New file...", command=self.new_file)
         self.file_menu.add_command(label="Open file...", command=self.open_file)
         self.file_menu.add_command(label="Save file...", command=self.save_file)
-        self.file_menu.add_command(label="Exit", command=self.parent.destroy)
+        self.file_menu.add_command(label="Exit", command=self.exit)
         self.menubar.add_cascade(label="File", menu=self.file_menu)
 
         self.text_entry = tk.Text(self.parent, height=20, width=50)
@@ -79,6 +79,14 @@ class MainWindow:
         
         self.text_entry.delete("1.0", tk.END)
         self.parent.title = self.APP_TITLE
+    
+    def exit(self):
+        save_file = self.confirm_save()
+        if save_file:
+            self.save_file()
+        elif save_file == None:
+            return
+        self.parent.destroy()
         
 
 if __name__ == "__main__":

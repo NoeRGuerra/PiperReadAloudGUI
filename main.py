@@ -30,9 +30,16 @@ class MainWindow:
         self.generate_btn.grid(row=1, column=1, sticky="NSEW")
         self.stream_btn = ttk.Button(self.parent, text="Stream", command=self.stream_audio)
         self.stream_btn.grid(row=2, column=0, sticky="NSEW")
+        self.build_dropdown()
         self.parent.rowconfigure(0, weight=1)
         self.parent.columnconfigure(0, weight=1)
         self.parent.columnconfigure(1, weight=1)
+    
+    def build_dropdown(self):
+        models = Path("models/").glob("*.onnx")
+        available_models = [Path(i).stem for i in models if Path(i).with_suffix(".onnx.json").exists()]
+        self.model_dropdown['values'] = available_models
+        self.model_dropdown.current(0)
 
     def open_file(self):
         filepath = filedialog.askopenfilename(parent=self.parent, filetypes=[("Text files", "*.txt")])

@@ -3,6 +3,7 @@ from tkinter import filedialog, messagebox
 from tkinter import ttk
 from piper.voice import PiperVoice
 from pathlib import Path
+from audio_generation import generate_audio
 
 class MainWindow:
     def __init__(self, parent):
@@ -25,7 +26,7 @@ class MainWindow:
         self.text_entry.grid(row=0, column=0, columnspan=2, sticky="NSEW")
         self.model_dropdown = ttk.Combobox(self.parent, width=10)
         self.model_dropdown.grid(row=1, column=0, sticky="NSEW")
-        self.generate_btn = ttk.Button(self.parent, text="Generate", width=10)
+        self.generate_btn = ttk.Button(self.parent, text="Generate", width=10, command=self.generate_audio)
         self.generate_btn.grid(row=1, column=1, sticky="NSEW")
         self.parent.rowconfigure(0, weight=1)
         self.parent.columnconfigure(0, weight=1)
@@ -57,7 +58,7 @@ class MainWindow:
             with open(filepath, 'w') as file:
                 file.write(text_content)
             if Path(filepath).exists():
-                messagebox.showinfo("File saved successfully", f"File saved successfully on {filepath}")
+                messagebox.showinfo("File saved successfully", f"File saved successfully at {filepath}")
                 self.parent.title = f"{self.APP_TITLE} - {Path(filepath).name}"
         except Exception as e:
             messagebox.showerror("Error", f"Error: {e}")
@@ -66,7 +67,7 @@ class MainWindow:
         text_content = self.text_entry.get("1.0", "end-1c")
         if not text_content:
             return False
-        answer = messagebox.askyesnocancel("Continue?", "This will close the current file. If you haven't saved its contents, loss of data could happen. \nDo you want to save the file?")
+        answer = messagebox.askyesnocancel("Continue?", "This will close the current text. If you haven't saved it, loss of data could happen. \nDo you want to save the text file?")
         return answer
 
 
@@ -87,7 +88,20 @@ class MainWindow:
         elif save_file == None:
             return
         self.parent.destroy()
-        
+
+    def generate_audio(self):
+        text_content = self.text_entry.get("1.0", "end-1c")
+        if not text_content:
+            messagebox.showwarning("Error", "Enter some text to generate audio")
+            return
+        filepath = filedialog.asksaveasfilename(defaultextension=".wav", filetypes=[("Wave files", "*.wav")])
+        generate_audio(text_content, self.model_dropdown.get(), filepath)
+        if Path(filepath).exists():
+            messagebox.showinfo("File saved successfully", f"File saved successfully at {filepath}")
+        else:
+            messagebox.showinfo("Error", "Error")
+
+
 
 if __name__ == "__main__":
     root = tk.Tk()

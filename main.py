@@ -3,7 +3,7 @@ from tkinter import filedialog, messagebox
 from tkinter import ttk
 from piper.voice import PiperVoice
 from pathlib import Path
-from audio_generation import generate_audio
+from audio_generation import generate_audio, stream_audio
 
 class MainWindow:
     def __init__(self, parent):
@@ -28,6 +28,8 @@ class MainWindow:
         self.model_dropdown.grid(row=1, column=0, sticky="NSEW")
         self.generate_btn = ttk.Button(self.parent, text="Generate", width=10, command=self.generate_audio)
         self.generate_btn.grid(row=1, column=1, sticky="NSEW")
+        self.stream_btn = ttk.Button(self.parent, text="Stream", command=self.stream_audio)
+        self.stream_btn.grid(row=2, column=0, sticky="NSEW")
         self.parent.rowconfigure(0, weight=1)
         self.parent.columnconfigure(0, weight=1)
         self.parent.columnconfigure(1, weight=1)
@@ -101,6 +103,12 @@ class MainWindow:
         else:
             messagebox.showinfo("Error", "Error")
 
+    def stream_audio(self):
+        text_content = self.text_entry.get("1.0", "end-1c")
+        if not text_content:
+            messagebox.showwarning("Error", "Enter some text to generate audio")
+            return
+        stream_audio(text_content, self.model_dropdown.get())
 
 
 if __name__ == "__main__":

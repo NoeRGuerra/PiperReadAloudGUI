@@ -3,6 +3,7 @@ from tkinter import filedialog, messagebox
 from tkinter import ttk
 from pathlib import Path
 from audio_generation import generate_audio, stream_audio
+import threading
 
 
 class MainWindow:
@@ -10,6 +11,13 @@ class MainWindow:
         self.parent = parent
         self.APP_TITLE = "Piper Read Aloud"
         self.setup_gui()
+    
+    def _display_generate_label(func):
+        def wrapper(self, *args, **kwargs):
+            self.progress_label['text'] = "Generating..."
+            func(self, *args, **kwargs)
+            self.progress_label['text'] = ""
+        return wrapper
 
     def setup_gui(self):
         self.parent.title(self.APP_TITLE)
@@ -27,13 +35,15 @@ class MainWindow:
         self.model_dropdown = ttk.Combobox(self.parent, width=10)
         self.model_dropdown.grid(row=1, column=0, sticky="NSEW")
         self.generate_btn = ttk.Button(
-            self.parent, text="Generate", width=10, command=self.generate_audio
+            self.parent, text="Generate", width=10, command=threading.Thread(target=self.generate_audio).start
         )
         self.generate_btn.grid(row=1, column=1, sticky="NSEW")
         self.stream_btn = ttk.Button(
-            self.parent, text="Stream", command=self.stream_audio
+            self.parent, text="Stream", command=threading.Thread(target=self.stream_audio).start
         )
         self.stream_btn.grid(row=2, column=0, sticky="NSEW")
+        self.progress_label = ttk.Label(self.parent, text="")
+        self.progress_label.grid(row=2, column=1, sticky="NSEW")
         self.build_dropdown()
         self.parent.rowconfigure(0, weight=1)
         self.parent.columnconfigure(0, weight=1)
@@ -76,6 +86,7 @@ class MainWindow:
         if not filepath:
             return
         text_content = self.text_entry.get("1.0", "end-1c")
+        self.progress_label['text'] = "Saving..."
         try:
             with open(filepath, "w") as file:
                 file.write(text_content)
@@ -86,6 +97,7 @@ class MainWindow:
                 self.parent.title = f"{self.APP_TITLE} - {Path(filepath).name}"
         except Exception as e:
             messagebox.showerror("Error", f"Error: {e}")
+        self.progress_label['text'] = ""
 
     def confirm_save(self):
         text_content = self.text_entry.get("1.0", "end-1c")
@@ -115,6 +127,7 @@ class MainWindow:
             return
         self.parent.destroy()
 
+    @_display_generate_label
     def generate_audio(self):
         text_content = self.text_entry.get("1.0", "end-1c")
         if not text_content:
@@ -131,13 +144,13 @@ class MainWindow:
         else:
             messagebox.showinfo("Error", "Error")
 
+    @_display_generate_label
     def stream_audio(self):
         text_content = self.text_entry.get("1.0", "end-1c")
         if not text_content:
             messagebox.showwarning("Error", "Enter some text to generate audio")
             return
         stream_audio(text_content, self.model_dropdown.get())
-
 
 if __name__ == "__main__":
     root = tk.Tk()

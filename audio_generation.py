@@ -1,4 +1,5 @@
 from piper.voice import PiperVoice
+from pathlib import Path
 import wave
 import numpy as np
 import sounddevice as sd
@@ -23,3 +24,11 @@ def stream_audio(text, model):
         stream.write(int_data)
     stream.stop()
     stream.close()
+
+
+def list_models():
+    models = Path("models/").rglob("*.onnx")
+    available_models = [
+        Path(i).stem for i in models if Path(i).with_suffix(".onnx.json").exists()
+    ]
+    return available_models

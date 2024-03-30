@@ -35,11 +35,11 @@ class MainWindow:
         self.model_dropdown = ttk.Combobox(self.parent, width=10)
         self.model_dropdown.grid(row=1, column=0, sticky="NSEW")
         self.generate_btn = ttk.Button(
-            self.parent, text="Generate", width=10, command=threading.Thread(target=self.generate_audio).start
+            self.parent, text="Generate", width=10, command=self.start_generate_audio_thread
         )
         self.generate_btn.grid(row=1, column=1, sticky="NSEW")
         self.stream_btn = ttk.Button(
-            self.parent, text="Stream", command=threading.Thread(target=self.stream_audio).start
+            self.parent, text="Stream", command=self.start_stream_audio_thread
         )
         self.stream_btn.grid(row=2, column=0, sticky="NSEW")
         self.progress_label = ttk.Label(self.parent, text="")
@@ -48,6 +48,7 @@ class MainWindow:
         self.parent.rowconfigure(0, weight=1)
         self.parent.columnconfigure(0, weight=1)
         self.parent.columnconfigure(1, weight=1)
+        self.parent.protocol("WM_DELETE_WINDOW", self.exit)
 
     def build_dropdown(self):
         models = Path("models/").glob("*.onnx")
@@ -136,6 +137,8 @@ class MainWindow:
         filepath = filedialog.asksaveasfilename(
             defaultextension=".wav", filetypes=[("Wave files", "*.wav")]
         )
+        if not filepath:
+            return
         generate_audio(text_content, self.model_dropdown.get(), filepath)
         if Path(filepath).exists():
             messagebox.showinfo(
@@ -151,6 +154,14 @@ class MainWindow:
             messagebox.showwarning("Error", "Enter some text to generate audio")
             return
         stream_audio(text_content, self.model_dropdown.get())
+    
+    def start_stream_audio_thread(self):
+        thread = threading.Thread(target=self.stream_audio, daemon=True)
+        thread.start()
+    
+    def start_generate_audio_thread(self):
+        thread = threading.Thread(target=self.generate_audio, daemon=True)
+        thread.start()
 
 if __name__ == "__main__":
     root = tk.Tk()

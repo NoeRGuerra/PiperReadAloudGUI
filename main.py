@@ -14,9 +14,9 @@ class MainWindow:
 
     def _display_generate_label(func):
         def wrapper(self, *args, **kwargs):
-            self.progress_label["text"] = "Generating..."
+            self.status_bar.set("Generating...")
             func(self, *args, **kwargs)
-            self.progress_label["text"] = ""
+            self.status_bar.set("Done.")
 
         return wrapper
 
@@ -33,21 +33,21 @@ class MainWindow:
 
         self.text_entry = tk.Text(self.parent, height=20, width=50)
         self.text_entry.grid(row=0, column=0, columnspan=2, sticky="NSEW")
-        self.model_dropdown = ttk.Combobox(self.parent, width=10)
-        self.model_dropdown.grid(row=1, column=0, sticky="NSEW")
+        self.model_dropdown = ttk.Combobox(self.parent, width=10, state='readonly')
+        self.model_dropdown.grid(row=1, column=0, columnspan=2, sticky="NSEW")
         self.generate_btn = ttk.Button(
             self.parent,
             text="Generate",
             width=10,
             command=self.start_generate_audio_thread,
         )
-        self.generate_btn.grid(row=1, column=1, sticky="NSEW")
+        self.generate_btn.grid(row=2, column=1, sticky="NSEW")
         self.stream_btn = ttk.Button(
             self.parent, text="Stream", command=self.start_stream_audio_thread
         )
         self.stream_btn.grid(row=2, column=0, sticky="NSEW")
-        self.progress_label = ttk.Label(self.parent, text="")
-        self.progress_label.grid(row=2, column=1, sticky="NSEW")
+        self.status_bar = StatusBar(self.parent)
+        self.status_bar.grid(row=3, column=0, columnspan=2, sticky='EW', pady=(5,0))
         self.build_dropdown()
         self.parent.rowconfigure(0, weight=1)
         self.parent.columnconfigure(0, weight=1)
@@ -88,7 +88,7 @@ class MainWindow:
         if not filepath:
             return
         text_content = self.text_entry.get("1.0", "end-1c")
-        self.progress_label["text"] = "Saving..."
+        self.status_bar.set("Saving...")
         try:
             with open(filepath, "w") as file:
                 file.write(text_content)
@@ -96,10 +96,10 @@ class MainWindow:
                 messagebox.showinfo(
                     "File saved successfully", f"File saved successfully at {filepath}"
                 )
-                self.parent.title = f"{self.APP_TITLE} - {Path(filepath).name}"
+                self.parent.title(f"{self.APP_TITLE} - {Path(filepath).name}")
         except Exception as e:
             messagebox.showerror("Error", f"Error: {e}")
-        self.progress_label["text"] = ""
+        self.status_bar.set("Done.")
 
     def confirm_save(self):
         text_content = self.text_entry.get("1.0", "end-1c")
@@ -119,7 +119,7 @@ class MainWindow:
             return
 
         self.text_entry.delete("1.0", tk.END)
-        self.parent.title = self.APP_TITLE
+        self.parent.title(self.APP_TITLE)
 
     def exit(self):
         save_file = self.confirm_save()
@@ -140,7 +140,9 @@ class MainWindow:
         )
         if not filepath:
             return
+        self.generate_btn['state'] = 'disabled'
         generate_audio(text_content, self.model_dropdown.get(), filepath)
+        self.generate_btn['state'] = 'normal'
         if Path(filepath).exists():
             messagebox.showinfo(
                 "File saved successfully", f"File saved successfully at {filepath}"
@@ -154,7 +156,9 @@ class MainWindow:
         if not text_content:
             messagebox.showwarning("Error", "Enter some text to generate audio")
             return
+        self.stream_btn['state'] = 'disabled'
         stream_audio(text_content, self.model_dropdown.get())
+        self.stream_btn['state'] = 'normal'
 
     def start_stream_audio_thread(self):
         thread = threading.Thread(target=self.stream_audio, daemon=True)
@@ -164,6 +168,20 @@ class MainWindow:
         thread = threading.Thread(target=self.generate_audio, daemon=True)
         thread.start()
 
+class StatusBar(tk.Frame):
+    def __init__(self, parent, text=""):
+        tk.Frame.__init__(self, parent)
+        self.text = tk.StringVar()
+        self.label = tk.Label(self, bd=1, relief=tk.SUNKEN, anchor=tk.W,
+                              textvariable=self.text)
+        self.text.set(text or "Status Bar")
+        self.label.pack(fill=tk.X)
+
+    def set(self, text):
+        self.text.set(text)
+
+    def clear(self):
+        self.text.set("")
 
 if __name__ == "__main__":
     root = tk.Tk()

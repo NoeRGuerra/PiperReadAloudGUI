@@ -4,6 +4,7 @@ import wave
 import numpy as np
 import sounddevice as sd
 
+base_path = Path(__file__).parent.parent
 
 def generate_audio(text, model, output_filepath):
     model_filepath = find_model_path(model)
@@ -27,14 +28,14 @@ def stream_audio(text, model):
 
 
 def list_models():
-    models = Path("models/").rglob("*.onnx")
+    models = Path(f"{base_path}/models/").rglob("*.onnx")
     available_models = [
         Path(i).stem for i in models if Path(i).with_suffix(".onnx.json").exists()
     ]
     return available_models
 
 def find_model_path(model_name):
-    models = Path("models/").rglob("*.onnx")
+    models = Path(f"{base_path}/models/").rglob("*.onnx")
     for model in models:
         if model.stem == model_name:
             return str(model)

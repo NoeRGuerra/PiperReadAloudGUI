@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 from tkinter import ttk
 from pathlib import Path
-from PiperReadAloudGUI.audio_generation import generate_audio, stream_audio, list_models
+from PiperReadAloudGUI.audio_generation import generate_audio, stream_audio, list_models, get_speaker_id_map
 import threading
 
 
@@ -33,8 +33,10 @@ class MainWindow:
 
         self.text_entry = tk.Text(self.parent, height=20, width=50, wrap=tk.WORD)
         self.text_entry.grid(row=0, column=0, columnspan=2, sticky="NSEW")
-        self.model_dropdown = ttk.Combobox(self.parent, width=10, state='readonly')
-        self.model_dropdown.grid(row=1, column=0, columnspan=2, sticky="NSEW")
+        self.model_dropdown = ttk.Combobox(self.parent, state='readonly')
+        self.model_dropdown.grid(row=1, column=0, sticky="NSEW")
+        self.speaker_dropdown = ttk.Combobox(self.parent, state='readonly')
+        self.speaker_dropdown.grid(row=1, column=1, sticky="NSEW")
         self.generate_btn = ttk.Button(
             self.parent,
             text="Generate",
@@ -49,15 +51,26 @@ class MainWindow:
         self.status_bar = StatusBar(self.parent)
         self.status_bar.grid(row=3, column=0, columnspan=2, sticky='EW', pady=(5,0))
         self.build_dropdown()
+        self.build_speakers_dropdown()
         self.parent.rowconfigure(0, weight=1)
         self.parent.columnconfigure(0, weight=1)
         self.parent.columnconfigure(1, weight=1)
         self.parent.protocol("WM_DELETE_WINDOW", self.exit)
+        self.model_dropdown.bind("<<ComboboxSelected>>", self.build_speakers_dropdown)
 
     def build_dropdown(self):
         available_models = list_models()
         self.model_dropdown["values"] = available_models
-        self.model_dropdown.current(0)
+        self.model_dropdown.current(2)
+    
+    def build_speakers_dropdown(self, event=None):
+        model = self.model_dropdown.get()
+        available_speakers = get_speaker_id_map(model)
+        if available_speakers:
+            self.speaker_dropdown['values'] = list(available_speakers)
+        else:
+            self.speaker_dropdown['values'] = ["Default"]
+        self.speaker_dropdown.current(0)
 
     def open_file(self):
         filepath = filedialog.askopenfilename(
@@ -132,6 +145,7 @@ class MainWindow:
     @_display_generate_label
     def generate_audio(self):
         text_content = self.text_entry.get("1.0", "end-1c")
+        speaker = self.speaker_dropdown.get() if self.speaker_dropdown.get() != "Default" else ""
         if not text_content:
             messagebox.showwarning("Error", "Enter some text to generate audio")
             return
@@ -141,7 +155,7 @@ class MainWindow:
         if not filepath:
             return
         self.generate_btn['state'] = 'disabled'
-        generate_audio(text_content, self.model_dropdown.get(), filepath)
+        generate_audio(text_content, self.model_dropdown.get(), filepath, speaker)
         self.generate_btn['state'] = 'normal'
         if Path(filepath).exists():
             messagebox.showinfo(
@@ -153,11 +167,12 @@ class MainWindow:
     @_display_generate_label
     def stream_audio(self):
         text_content = self.text_entry.get("1.0", "end-1c")
+        speaker = self.speaker_dropdown.get() if self.speaker_dropdown.get() != "Default" else ""
         if not text_content:
             messagebox.showwarning("Error", "Enter some text to generate audio")
             return
         self.stream_btn['state'] = 'disabled'
-        stream_audio(text_content, self.model_dropdown.get())
+        stream_audio(text_content, self.model_dropdown.get(), speaker)
         self.stream_btn['state'] = 'normal'
 
     def start_stream_audio_thread(self):

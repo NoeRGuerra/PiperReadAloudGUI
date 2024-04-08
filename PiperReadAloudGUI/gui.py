@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 from tkinter import ttk
 from pathlib import Path
-from PiperReadAloudGUI.audio_generation import generate_audio, stream_audio, list_models, get_speaker_id_map
+from PiperReadAloudGUI.audio_generation import generate_audio, stream_audio, list_models, get_speaker_id_map, SOUNDDEVICE_AVAILABLE
 import threading
 
 
@@ -57,6 +57,9 @@ class MainWindow:
         self.parent.columnconfigure(1, weight=1)
         self.parent.protocol("WM_DELETE_WINDOW", self.exit)
         self.model_dropdown.bind("<<ComboboxSelected>>", self.build_speakers_dropdown)
+        if not SOUNDDEVICE_AVAILABLE:
+            messagebox.showwarning("PortAudio library not found.", "The program could not find the PortAudio library in your system. \nAudio streaming is disabled.")
+            self.stream_btn['state'] = 'disabled'
 
     def build_dropdown(self):
         available_models = list_models()

@@ -3,7 +3,11 @@ from pathlib import Path
 import wave
 import json
 import numpy as np
-import sounddevice as sd
+try:
+    import sounddevice as sd
+    SOUNDDEVICE_AVAILABLE = True
+except (ImportError, OSError):
+    SOUNDDEVICE_AVAILABLE = False
 
 base_path = Path(__file__).parent.parent
 
@@ -19,6 +23,8 @@ def generate_audio(text, model, output_filepath, speaker=None):
 
 
 def stream_audio(text, model, speaker=None):
+    if not SOUNDDEVICE_AVAILABLE:
+        return
     model_filepath = find_model_path(model)
     voice = PiperVoice.load(model_filepath)
     speaker_id = None

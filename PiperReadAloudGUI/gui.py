@@ -60,11 +60,14 @@ class MainWindow:
 
     def build_dropdown(self):
         available_models = list_models()
-        self.model_dropdown["values"] = available_models
-        self.model_dropdown.current(2)
+        self.model_dropdown["values"] = available_models or ["",]
+        self.model_dropdown.current(0)
     
     def build_speakers_dropdown(self, event=None):
         model = self.model_dropdown.get()
+        if not model:
+            self.speaker_dropdown['values'] = ["",]
+            return
         available_speakers = get_speaker_id_map(model)
         if available_speakers:
             self.speaker_dropdown['values'] = list(available_speakers)
